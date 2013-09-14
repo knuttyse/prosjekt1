@@ -1,0 +1,11 @@
+/data/
+/plot/
+*.log 
+*.aux
+*.out
+*.pdf
+*.png
+*~
+*.bak
+/qmake/build-c-Desktop-Debug
+../

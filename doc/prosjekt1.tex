@@ -1,0 +1,197 @@
+\documentclass[a4paper,10pt,norsk]{article}
+
+\usepackage{mathtools}
+\usepackage{graphicx}
+\usepackage[utf8]{inputenc}
+\usepackage{amsfonts}
+\usepackage{ulem}
+%\newcommand{\Fig}[1]{Figure~\ref{#1}}
+%\newcommand{\fig}[1]{figure~\ref{#1}}
+%\newcommand{\eq}[1]{equation~\ref{#1}}
+%\newcommand{\Eq}[1]{Equation~\ref{#1}}
+\newcommand{\eq}[1]{\begin{align*}#1\end{align*}}
+
+% Shortcuts for including equations
+\newcommand{\beq}{\begin{equation}}
+\newcommand{\eeq}{\end{equation}}
+\def\i{\hat{i}}
+\def\j{\hat{j}}
+\def\k{\hat{k}}
+
+% Document formatting
+\setlength{\parindent}{0mm}
+\setlength{\parskip}{1.5mm}
+
+% Hyper refs
+\usepackage[colorlinks]{hyperref}
+
+\usepackage{listings}
+\lstset{language=matlab}
+\lstset{basicstyle=\ttfamily\tiny}
+\lstset{frame=single}
+\lstset{stringstyle=\ttfamily}
+\lstset{keywordstyle=\color{red}\bfseries}
+\lstset{commentstyle=\itshape\color{blue}}
+\lstset{showspaces=false}
+\lstset{showstringspaces=false}
+\lstset{showtabs=false}
+\lstset{breaklines}
+\lstdefinestyle{prt}{frame=none,basicstyle=\ttfamily\small}
+
+\newcounter{subproject}
+\renewcommand{\thesubproject}{\alph{subproject}}
+\newenvironment{subproj}{
+\begin{description}
+\item[\refstepcounter{subproject}(\thesubproject)]
+}{\end{description}}
+
+\def\m{\hspace{1pt}}
+\usepackage[margin=1.25in]{geometry}
+%\setlength{\parindent}{1cm}
+%------------------------------------------------------------------------
+\begin{document}
+\begin{align*}
+\begin{bmatrix}
+b_1 & c_1 &  0  &  0  & f_1\\
+a_2 & b_2 & c_2 &  0  & f_2\\
+ 0  & a_3 & b_3 & c_3 & f_3\\
+ 0  &  0  & a_4 & b_4 & f_4
+\end{bmatrix} \\
+\begin{bmatrix}
+b_1 & c_1 &  0  &  0   & f_1\\
+0 & b_2-a_2/b_1 \cdot c_1 & c_2 &  0  & f_2-a_2/b_1\cdot f_1\\
+0 & a_3 & b_3 & c_3 & f_3\\
+0 &  0  & a_4 & b_4 & f_4
+\end{bmatrix}\\
+\begin{bmatrix}
+b_1 & c_1 &  0  &  0   & f_1\\
+0 & b_2^* & c_2 &  0  & f_2-a_2/b_1\cdot f_1\\
+0 & a_3 & b_3 & c_3 & f_3\\
+0 &  0  & a_4 & b_4 & f_4
+\end{bmatrix}\\ 
+\begin{bmatrix}
+b_1 & c_1   &  0  &  0  & f_1\\
+0   & b_2^* & c_2 &  0  & f_2*\\
+0   & a_3   & b_3 & c_3 & f_3\\
+0   & 0     & a_4 & b_4 & f_4
+\end{bmatrix}\\ 
+\\
+\cdots\\
+\begin{bmatrix}
+ b_1  & c_1   &  0     &  0         &  f_1  \\
+ 0  &  b_2^*  &  c_2   &  0         &  f_2^* \\
+ 0  &  0     &  b_3^*  &  c_3       &  f_3^*  \\
+ 0  &  0     &  0     &  b_4- a_4/b_3^*\cdot c_3 &  f_4- a_4/b_3\cdot f_3^*
+\end{bmatrix}\\
+\begin{bmatrix}
+ b_1     & c_1    &   0        &   0      & \cdots     &     0      &  f_1^*  \\[-0.2em]
+ 0      &  b_2^*  &   c_2      &   0      & \ddots     &     0      &  f_2^*  \\[0.5em]
+ 0      &  0      &   b_3^*   &  c_3     &  0          &     0      &  f_3^*  \\
+ \vdots &  \vdots &  \ddots   & \ddots   & \ddots     &            & \vdots  \\ 
+ 0      &  0      &  \cdots   &    0     &  b_{n-1}^*  &    c_{n-1}  & f_{n-1}^* \\[0.7em]
+ 0      &  0      &  \cdots   & \cdots   &  0         &     b_n^*  &  f_n^*
+\end{bmatrix}\\
+\end{align*}
+
+Hvor 
+\begin{align*}
+b_1^*&=b_1
+f_i^*&= f_i- a_i/b_{i-1}^* \cdot f_{i-1}^*\\\\
+b_{i}^*&= b_{i}-a_{i}/b_{i-1}^*\cdot c_{i-1}\\\\
+\end{align*}
+Faktoren $k_j \equiv -a_j/b_{j-1}^*\quad , \quad 1<j<=n$ brukes to ganger i ligningene over. I algoritmen vil jeg regne ut denne verdien en gang for hver $i$ i loopen. Da sparer jeg en flytallsoperasjon. Seudokoden blir:
+\begin{align*}
+&b\_stjerne\, =\, array(n)\\
+&f\_stjerne\, =\, array(n)\\
+&b\_stjerne(1)\, =\, b1\\
+&for\, i\,=\,2,\, 3,\, 4 \, ...\,  n:\\
+&\quad k=-a(i)/b\_stjerne(i-1)\\
+&\quad f\_stjerne(i)= f(i)+k \cdot f\_stjerne(i-1)\\
+&\quad b\_stjerne(i)= b(i)+k*c(i-1)\\
+\end{align*}
+Men vi skal løse ligningen ved å finne verdien av $u_i$. Derfor må vi substituere bakover for å eliminere $c_{i-1}$-elementene over $b_i^*$ på diagonalen. Så deler vi hver rad på den $b^*$ vi finner i den aktuelle raden. 
+\begin{align*}
+\begin{bmatrix}
+ b_1^*   &  c_1       &   0       & 0         &  \cdots  &  f_1^*  \\[-0.2em]
+  0      &  b_2^*     &   c_2     & 0         &  \ddots  & f_2^*  \\
+ \vdots  &   \ddots   &  \ddots  & \ddots    &  \ddots   & \vdots  \\  
+ 0         &    0     &  0       &  b_{n-1}^* & c_{n-1}    & f_{n-1}^* \\[0.7em]
+ 0         & \cdots   &  0       &  0        &   b_n^*   &  f_n^*
+\end{bmatrix}&\rightarrow
+\begin{bmatrix}
+b_1^*  &  c_1       &   0       &  \cdots    & 0       &  f_1^*  \\
+0      &  b_2^*     &   c_2     &    0       & \cdots  &  f_2^* \\ 
+\vdots &  \ddots   & \ddots    &  \ddots    & \ddots  & \vdots  \\  
+0      &   0       & 0         &  b_{n-1}^*  & c_{n-1}  & f_{n-1}^* \\[0.7em]
+0      & \cdots    & 0         &  0         &   1     &  f_n^*/b_n^*
+\end{bmatrix}\\
+\begin{bmatrix}
+ b_1^*   &  c_1       &   0       &  \cdots   & 0       &  f_1^* \\[0.5em]
+  0      &  b_2^*     &   c_2     & 0         &  \cdots &  f_2^* \\ 
+  \vdots &  \ddots    &  \ddots   & \ddots   & \dots    & \vdots \\[0.7em]  
+ 0       &  0         &    0      &  b_{n-1}^* & c_{n-1}  & f_{n-1}^* \\[0.7em]
+ 0       &  0         & \cdots    & 0         &   1     &  f_n^{**}
+\end{bmatrix}&\rightarrow
+\begin{bmatrix}
+ b_1^*  &  c_1   &   0     &  \cdots   &   0     &  f_1^* \\[0.5em]
+  0     &  b_2^* &   c_2   & 0         &  \cdots &  f_2^* \\ 
+ \vdots & \ddots &  \ddots & \ddots    & \ddots & \vdots \\[0.7em]  
+ 0      &  0     &    0    &  b_{n-1}^* &   0     & f_{n-1}^*-c_{n-1} \cdot f_n^{**} \\[0.7em]
+ 0      &  0     & \cdots  & 0         &   1     &  f_n^{**}
+\end{bmatrix}\\
+\begin{bmatrix}
+ b_1^*   &  c_1    &   0       &  \cdots  & 0        &  f_1^* \\[0.5em]
+ 0      &  b_2^*   &   c_2     & 0        &  \cdots  &  f_2^* \\ 
+ \vdots &  \ddots  &  \ddots   & \ddots   &   \ddots & \vdots \\[0.7em]  
+ 0       &  0      &    0      &  1       &   0      & \frac{f_{n-1}^*-c_{n-1} \cdot f_n^{**}}{b_{n-1}^*} \\[0.7em]
+ 0       &  0      & \cdots    &  0       &   1      &  f_n^{**}
+\end{bmatrix}&\rightarrow
+\begin{bmatrix}
+ b_1^*   &  c_1    &   0     &  \cdots  &   0      &  f_1^* \\[0.5em]
+ 0      &  b_2^*   &   c_2   & 0        &  \cdots  &  f_2^* \\ 
+ \vdots &  \ddots  &  \ddots & \ddots   &   \ddots & \vdots \\[0.7em]  
+ 0       &  0      &    0    &  1       &   0      & f_{n-1}^{**} \\[0.7em]
+ 0       &  0      & \cdots  &  0       &   1      &  f_n^{**}
+\end{bmatrix}\\
+\rightarrow  \quad\cdots\quad & \rightarrow
+\begin{bmatrix}
+ 1      &  0      &   0     &  \cdots  &  0      & f_1^{**} \\[0.5em]
+ 0      &  1      &   0     &  0       & \cdots  & f_2^{**} \\ 
+ \vdots &  \ddots &  \ddots &  \ddots  &  \ddots & \vdots \\[0.7em]  
+ 0      &  0      &    0    &   1      &  0      & f_{n-1}^{**} \\[0.7em]
+ 0      &  0      & \cdots  &  0       &  1      & f_n^{**}
+\end{bmatrix}
+\end{align*}
+Da får vi at
+\begin{align*}
+f^{**}_n&=f_n^*/b_n^*\\
+f^{**}_i&= \frac{f_{i}^* -c_{i} \cdot f_{i+1}^{**}}{b_i^* }
+\end{align*}
+Løsningene $u_i$ finner vi da direkte som $f^{**}_i$
+\begin{align*}
+u_i&=f^{**}_i =\frac{f_{i}^* -c_{i} \cdot f_{i+1}^{**}}{b_i^* } =\frac{f_{i}^* -c_{i}/b_{i+1}^* \cdot u_{i+1}}{b_i^*}\\
+\end{align*}
+
+Pseudokoden for den siste algoritmen blir da:
+
+\begin{align*}
+&u\,=\,zeros(n)\\
+&u(n)\,=\,f\_stjerne(n)\\
+&for\, i\,=\, n-1,\, n-2 \, ...\, ,\, 1:\\
+&\quad\quad u(i)=f\_stjerne(i) -c(i)/b\_stjerne(i+1) \cdot u(i+1)\\
+\end{align*}
+Vi trenger egentlig ikke noen $f$- og $f\_stjerne$-array for å representere siste kolonne i matrisen. Vi kan bruke en $u$-array som stadig blir redefinert(). $b\_stjerne$-arrayen kan egentlig kalles for $b$. Hvis alle $a_i$ og $c_i$ har en gitt verdi(minus 1), gir vi eventuellt a og c en double-verdi. Da får vi følgende pseudokode: 
+\begin{align*}
+&u\,=\,zeros(n)\\
+&b\, =\, array(n)\\
+&b(1)\, =\, b1\\
+&for\, i\,=\,2,\, 3,\, 4 \, ...\,  n:\\
+&\quad\quad k=-a(i)/b(i-1)\\
+&\quad\quad u(i)= u(i)+k* u(i-1)\\
+&\quad\quad b(i)= b(i)+k*c(i-1)\\
+\\
+&u(n)\,=u(n)/b(n)\\
+&for\, i\,=\, n-1,\, n-2 \, ...\, ,\, 1:\\
+&\quad\quad u(i)=u(i) -c(i)/b(i+1) * u(i+1)\\
+\end{align*}
+\end{document}
